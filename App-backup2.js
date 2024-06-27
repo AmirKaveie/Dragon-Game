@@ -4,7 +4,7 @@ import Svg, { Rect, Polygon, Path } from 'react-native-svg';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const INITIAL_DRAGON_SIZE = 64;
-const EGG_SIZE = 64;
+const EGG_SIZE = 32;
 const GAME_DURATION = 60 * 1000; // 1 minute in milliseconds
 
 const Dragon = ({ size, x }) => (
@@ -41,7 +41,7 @@ const Cloud = ({ x, y, size }) => (
 );
 
 const Tree = ({ x, y, size }) => (
-  <Svg width={size} height={size * 6} viewBox="0 0 64 96" style={{ position: 'absolute', bottom: y, left: x }}>
+  <Svg width={size} height={size * 1.5} viewBox="0 0 64 96" style={{ position: 'absolute', bottom: y, left: x }}>
     <Rect x={24} y={64} width={16} height={32} fill="#795548" />
     <Polygon points="0,64 32,0 64,64" fill="#2ecc71" />
     <Polygon points="8,96 32,32 56,96" fill="#27ae60" />
@@ -140,11 +140,9 @@ export default function App() {
     return `${seconds.toString().padStart(2, '0')}`;
   };
 
-  const handleTouch = useCallback((event) => {
-    const touchX = event.nativeEvent.locationX;
-    const newDragonX = Math.max(dragonSize / 2, Math.min(touchX, SCREEN_WIDTH - dragonSize / 2));
-    setDragonX(newDragonX);
-  }, [dragonSize]);
+  const handleTouch = (event) => {
+    setDragonX(event.nativeEvent.locationX);
+  };
 
   const resetGame = () => {
     setDragonX(SCREEN_WIDTH / 2);

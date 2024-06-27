@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { StyleSheet, View, Text, Dimensions, TouchableWithoutFeedback, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { StyleSheet, View, Text, Dimensions, TouchableWithoutFeedback, Animated, TouchableOpacity } from 'react-native';
 import Svg, { Rect, Polygon, Path } from 'react-native-svg';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const INITIAL_DRAGON_SIZE = 64;
-const EGG_SIZE = 64;
+const EGG_SIZE = 32;
 const GAME_DURATION = 60 * 1000; // 1 minute in milliseconds
 
 const Dragon = ({ size, x }) => (
@@ -41,7 +41,7 @@ const Cloud = ({ x, y, size }) => (
 );
 
 const Tree = ({ x, y, size }) => (
-  <Svg width={size} height={size * 6} viewBox="0 0 64 96" style={{ position: 'absolute', bottom: y, left: x }}>
+  <Svg width={size} height={size * 1.5} viewBox="0 0 64 96" style={{ position: 'absolute', bottom: y, left: x }}>
     <Rect x={24} y={64} width={16} height={32} fill="#795548" />
     <Polygon points="0,64 32,0 64,64" fill="#2ecc71" />
     <Polygon points="8,96 32,32 56,96" fill="#27ae60" />
@@ -69,36 +69,36 @@ export default function App() {
 
   const animationRef = useRef(null);
 
-  const gameLoop = useCallback(() => {
-    setTimeLeft((prevTime) => {
-      if (prevTime <= 0) {
-        endGame('YOU LOST!!!');
-        return 0;
-      }
-      return prevTime - 16; // Approximately 60 FPS
-    });
-
-    setEggs((prevEggs) => {
-      const newEggs = prevEggs.map((egg) => ({
-        ...egg,
-        y: egg.y + egg.speed,
-      })).filter((egg) => egg.y < SCREEN_HEIGHT);
-
-      if (Math.random() < 0.01) { // Reduced egg spawn rate
-        newEggs.push({
-          x: Math.random() * (SCREEN_WIDTH - EGG_SIZE),
-          y: -EGG_SIZE,
-          speed: Math.random() * 4 + 3, // Increased egg speed
-        });
-      }
-
-      return newEggs;
-    });
-
-    animationRef.current = requestAnimationFrame(gameLoop);
-  }, []);
-
   useEffect(() => {
+    const gameLoop = () => {
+      setTimeLeft((prevTime) => {
+        if (prevTime <= 0) {
+          endGame('YOU LOST!!!');
+          return 0;
+        }
+        return prevTime - 16; // Approximately 60 FPS
+      });
+
+      setEggs((prevEggs) => {
+        const newEggs = prevEggs.map((egg) => ({
+          ...egg,
+          y: egg.y + egg.speed,
+        })).filter((egg) => egg.y < SCREEN_HEIGHT);
+
+        if (Math.random() < 0.01) { // Reduced egg spawn rate
+          newEggs.push({
+            x: Math.random() * (SCREEN_WIDTH - EGG_SIZE),
+            y: -EGG_SIZE,
+            speed: Math.random() * 4 + 3, // Increased egg speed
+          });
+        }
+
+        return newEggs;
+      });
+
+      animationRef.current = requestAnimationFrame(gameLoop);
+    };
+
     animationRef.current = requestAnimationFrame(gameLoop);
 
     return () => {
@@ -106,11 +106,9 @@ export default function App() {
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [gameLoop]);
+  }, []);
 
   useEffect(() => {
-    if (gameOver) return;
-
     eggs.forEach((egg) => {
       if (
         Math.abs(dragonX - (egg.x + EGG_SIZE / 2)) < dragonSize / 2 &&
@@ -125,7 +123,7 @@ export default function App() {
     if (dragonSize >= INITIAL_DRAGON_SIZE * 3) {
       endGame('YOU WON DUDE!');
     }
-  }, [eggs, dragonX, dragonSize, gameOver]);
+  }, [eggs, dragonX, dragonSize]);
 
   const endGame = (msg) => {
     setGameOver(true);
@@ -140,11 +138,9 @@ export default function App() {
     return `${seconds.toString().padStart(2, '0')}`;
   };
 
-  const handleTouch = useCallback((event) => {
-    const touchX = event.nativeEvent.locationX;
-    const newDragonX = Math.max(dragonSize / 2, Math.min(touchX, SCREEN_WIDTH - dragonSize / 2));
-    setDragonX(newDragonX);
-  }, [dragonSize]);
+  const handleTouch = (event) => {
+    setDragonX(event.nativeEvent.locationX);
+  };
 
   const resetGame = () => {
     setDragonX(SCREEN_WIDTH / 2);
